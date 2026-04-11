@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+joblib
+scikit-learn
+numpy
+python-dotenv
+imbalanced-learn

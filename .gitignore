@@ -1,0 +1,39 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# ── Virtual Environment ──
+venv/
+.venv/
+env/
+
+# ── Environment Variables ──
+.env
+
+# ── Database ──
+*.db
+
+# ── ML Model Files (large binaries) ──
+backend/ml/*.pkl
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Distribution / Build ──
+dist/
+build/
+*.egg-info/
+
+# ── Logs ──
+*.log

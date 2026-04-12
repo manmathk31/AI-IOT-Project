@@ -31,7 +31,7 @@ async function handleFormSubmit(e) {
 
 async function fetchTasks() {
   try {
-    const res = await fetch('http://localhost:8000/api/maintenance');
+    const res = await fetch('/api/maintenance');
     if (!res.ok) throw new Error('Maintenance fetch failed');
     const data = await res.json();
 
@@ -125,7 +125,7 @@ function renderColumn(containerId, tasks, type) {
 
 async function submitTask(engineer, machine, notes) {
   try {
-    const res = await fetch('http://localhost:8000/api/maintenance', {
+    const res = await fetch('/api/maintenance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ engineer, machine, notes })
@@ -144,7 +144,7 @@ async function submitTask(engineer, machine, notes) {
 
 async function updateTaskStatus(id, status) {
   try {
-    const res = await fetch('http://localhost:8000/api/maintenance/' + id, {
+    const res = await fetch('/api/maintenance/' + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })

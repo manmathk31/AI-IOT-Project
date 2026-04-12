@@ -2,7 +2,7 @@
    DASHBOARD — Live Monitoring
    =========================== */
 
-const API = 'http://localhost:8000';
+const API = '';
 let tempChart = null;
 let currentChart = null;
 let tempData = [];

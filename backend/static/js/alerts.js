@@ -29,7 +29,7 @@ function setupFilterButtons() {
 
 async function fetchAlerts() {
   try {
-    const res = await fetch('http://localhost:8000/api/alerts');
+    const res = await fetch('/api/alerts');
     if (!res.ok) throw new Error('Alerts fetch failed');
     const data = await res.json();
 
@@ -114,7 +114,7 @@ function renderAlertsTable(filter) {
 
 async function resolveAlert(id) {
   try {
-    const res = await fetch('http://localhost:8000/api/alerts/' + id + '/resolve', {
+    const res = await fetch('/api/alerts/' + id + '/resolve', {
       method: 'POST'
     });
     if (!res.ok) throw new Error('Resolve failed');

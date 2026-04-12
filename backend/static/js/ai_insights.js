@@ -7,7 +7,7 @@ let insightsLoaded = false;
 
 async function initInsights() {
   try {
-    const metricsRes = await fetch('http://localhost:8000/api/model-metrics');
+    const metricsRes = await fetch('/api/model-metrics');
     if (!metricsRes.ok) throw new Error('Model metrics fetch failed');
     const data = await metricsRes.json();
 
@@ -138,7 +138,7 @@ function renderFeatureImportances(importances) {
 
 async function fetchInsightPrediction() {
   try {
-    const res = await fetch('http://localhost:8000/api/prediction');
+    const res = await fetch('/api/prediction');
     if (!res.ok) return;
     const data = await res.json();
 

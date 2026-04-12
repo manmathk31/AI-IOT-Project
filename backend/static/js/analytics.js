@@ -10,8 +10,8 @@ let analyticsSeverityChart = null;
 async function initAnalytics() {
   try {
     const [historyRes, alertsRes] = await Promise.all([
-      fetch('http://localhost:8000/api/history?limit=200'),
-      fetch('http://localhost:8000/api/alerts')
+      fetch('/api/history?limit=200'),
+      fetch('/api/alerts')
     ]);
 
     if (!historyRes.ok || !alertsRes.ok) throw new Error('Analytics data fetch failed');

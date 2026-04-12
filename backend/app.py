@@ -1,12 +1,16 @@
 """
 Main FastAPI application for the Wind Turbine Monitoring System.
+Serves both the REST API and the frontend static files.
 """
 
+import os
 import queue
 import threading
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from database import engine, SessionLocal, Base
 from simulator import run_simulator
@@ -31,11 +35,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Include Routers ──
+# ── Include API Routers ──
 app.include_router(data_router)
 app.include_router(predictions_router)
 app.include_router(alerts_router)
 app.include_router(maintenance_router)
+
+# ── Serve Static Files (CSS, JS, images) ──
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 # ── Startup Event ──
@@ -67,10 +75,15 @@ def startup_event():
     print("System started. Simulator and inference engine running.")
 
 
-# ── Root Endpoint ──
+# ── Serve Frontend ──
 @app.get("/")
-def root():
-    return {
-        "status": "Wind Turbine Monitoring API is running",
-        "docs": "/docs",
-    }
+async def serve_frontend():
+    """Serve the main dashboard HTML."""
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+
+# ── Catch-all: always serve index.html for non-API, non-static paths ──
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """Fallback route — serves index.html for any unknown path."""
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))

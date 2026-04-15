@@ -10,6 +10,7 @@ let currentData = [];
 let timeLabels = [];
 let dashboardInitialized = false;
 let dashboardIntervals = [];
+let systemInfoFetched = false;
 
 function initDashboard() {
   if (!dashboardInitialized) {
@@ -17,14 +18,22 @@ function initDashboard() {
     dashboardInitialized = true;
   }
 
+  // Fetch system info once on first init
+  if (!systemInfoFetched) {
+    fetchSystemInfo();
+    systemInfoFetched = true;
+  }
+
   pollLiveData();
   pollPrediction();
+  pollSensorHealth();
 
   const liveInterval = setInterval(pollLiveData, 2000);
   const predInterval = setInterval(pollPrediction, 2000);
+  const healthInterval = setInterval(pollSensorHealth, 5000);
 
   if (typeof activeIntervals !== 'undefined') {
-    activeIntervals.push(liveInterval, predInterval);
+    activeIntervals.push(liveInterval, predInterval, healthInterval);
   }
 }
 
@@ -147,6 +156,7 @@ async function pollLiveData() {
     const latest = data.readings[0];
 
     const tempEl = document.getElementById('metric-temp');
+    const humidityEl = document.getElementById('metric-humidity');
     const currentEl = document.getElementById('metric-current');
     const vibLed = document.getElementById('led-vibration');
     const vibText = document.getElementById('metric-vibration');
@@ -154,6 +164,7 @@ async function pollLiveData() {
     const flameText = document.getElementById('metric-flame');
 
     if (tempEl) tempEl.textContent = parseFloat(latest.temp).toFixed(1) + ' °C';
+    if (humidityEl) humidityEl.textContent = parseFloat(latest.humidity || 0).toFixed(1) + ' %';
     if (currentEl) currentEl.textContent = parseFloat(latest.current).toFixed(1) + ' mA';
 
     if (vibLed) {
@@ -254,6 +265,46 @@ async function pollPrediction() {
   }
 }
 
+async function pollSensorHealth() {
+  try {
+    const res = await fetch(API + '/api/sensor-health');
+    if (!res.ok) return;
+    const health = await res.json();
+
+    const STATUS_LABELS = { ok: 'Active', fallback: 'Fallback', failed: 'Offline' };
+    const sensors = ['temp', 'humidity', 'current', 'vibration', 'flame'];
+
+    sensors.forEach(sensor => {
+      const dot = document.getElementById('health-' + sensor);
+      const text = document.getElementById('health-' + sensor + '-text');
+      const wrap = document.getElementById('health-' + sensor + '-wrap');
+      const status = health[sensor] || 'ok';
+
+      if (dot) dot.className = 'sensor-dot sensor-dot-' + status;
+      if (text) {
+        text.textContent = STATUS_LABELS[status] || 'Active';
+        text.className = 'sensor-status-text sensor-text-' + status;
+      }
+      if (wrap) wrap.className = 'sensor-status status-' + status;
+    });
+  } catch (err) {
+    console.error('Sensor health poll error:', err);
+  }
+}
+
+async function fetchSystemInfo() {
+  try {
+    const res = await fetch(API + '/api/system-info');
+    if (!res.ok) return;
+    const info = await res.json();
+    // Store data source for status display
+    window._dataSource = info.data_source || 'simulator';
+  } catch (err) {
+    console.error('System info fetch error:', err);
+    window._dataSource = 'simulator';
+  }
+}
+
 function updateSystemStatus(online) {
   const dot = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
@@ -261,6 +312,12 @@ function updateSystemStatus(online) {
     dot.className = online ? 'status-dot online' : 'status-dot offline';
   }
   if (text) {
-    text.textContent = online ? 'Live' : 'Offline';
+    if (online) {
+      const source = window._dataSource || 'simulator';
+      const label = source === 'hardware' ? 'Hardware' : 'Simulator';
+      text.textContent = 'Live — ' + label;
+    } else {
+      text.textContent = 'Offline';
+    }
   }
 }

@@ -93,8 +93,12 @@
 
       <!-- ===== DASHBOARD TAB ===== -->
       <section id="section-dashboard" class="tab-section active">
-        <div class="metrics-row">
-          <div class="metric-card">
+        <div class="metrics-row metrics-row-5">
+          <div class="metric-card" data-sensor="temp">
+            <div class="sensor-status" id="health-temp-wrap">
+              <span class="sensor-dot sensor-dot-ok" id="health-temp"></span>
+              <span class="sensor-status-text sensor-text-ok" id="health-temp-text">Active</span>
+            </div>
             <div class="metric-icon" style="background:#EFF6FF;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
             </div>
@@ -103,7 +107,24 @@
               <span class="metric-value mono" id="metric-temp">--.- °C</span>
             </div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card" data-sensor="humidity">
+            <div class="sensor-status" id="health-humidity-wrap">
+              <span class="sensor-dot sensor-dot-ok" id="health-humidity"></span>
+              <span class="sensor-status-text sensor-text-ok" id="health-humidity-text">Active</span>
+            </div>
+            <div class="metric-icon" style="background:#EFF6FF;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Humidity</span>
+              <span class="metric-value mono" id="metric-humidity">--.- %</span>
+            </div>
+          </div>
+          <div class="metric-card" data-sensor="current">
+            <div class="sensor-status" id="health-current-wrap">
+              <span class="sensor-dot sensor-dot-ok" id="health-current"></span>
+              <span class="sensor-status-text sensor-text-ok" id="health-current-text">Active</span>
+            </div>
             <div class="metric-icon" style="background:#FFF7ED;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             </div>
@@ -112,7 +133,11 @@
               <span class="metric-value mono" id="metric-current">--.- mA</span>
             </div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card" data-sensor="vibration">
+            <div class="sensor-status" id="health-vibration-wrap">
+              <span class="sensor-dot sensor-dot-ok" id="health-vibration"></span>
+              <span class="sensor-status-text sensor-text-ok" id="health-vibration-text">Active</span>
+            </div>
             <div class="metric-icon" style="background:#FFFBEB;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
             </div>
@@ -124,7 +149,11 @@
               </div>
             </div>
           </div>
-          <div class="metric-card">
+          <div class="metric-card" data-sensor="flame">
+            <div class="sensor-status" id="health-flame-wrap">
+              <span class="sensor-dot sensor-dot-ok" id="health-flame"></span>
+              <span class="sensor-status-text sensor-text-ok" id="health-flame-text">Active</span>
+            </div>
             <div class="metric-icon" style="background:#FEF2F2;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M12 2C12 2 8 6 8 10c0 2.21 1.79 4 4 4s4-1.79 4-4c0-4-4-8-4-8z"/><path d="M12 14v4"/><path d="M10 22h4"/></svg>
             </div>

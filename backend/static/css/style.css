@@ -283,7 +283,12 @@ body {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.metrics-row-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .metric-card {
+  position: relative;
   background: #FFFFFF;
   border-radius: 12px;
   border: 1px solid #E5E7EB;
@@ -298,6 +303,76 @@ body {
 .metric-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   transform: translateY(-1px);
+}
+
+/* Sensor health status — top-right corner of metric card */
+.sensor-status {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 9999px;
+  background: rgba(22, 163, 74, 0.08);
+  transition: background 300ms ease;
+}
+
+.sensor-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 300ms ease, box-shadow 300ms ease;
+}
+
+.sensor-status-text {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 300ms ease;
+}
+
+/* OK / Active */
+.sensor-dot-ok {
+  background: #16A34A;
+  box-shadow: 0 0 4px rgba(22, 163, 74, 0.5);
+}
+.sensor-text-ok {
+  color: #16A34A;
+}
+
+/* Fallback */
+.sensor-dot-fallback {
+  background: #D97706;
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.6);
+  animation: pulse 1.5s infinite;
+}
+.sensor-text-fallback {
+  color: #D97706;
+}
+
+/* Failed / Offline */
+.sensor-dot-failed {
+  background: #DC2626;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.7);
+  animation: pulse 0.8s infinite;
+}
+.sensor-text-failed {
+  color: #DC2626;
+}
+
+/* Background tint per state */
+.sensor-status.status-ok {
+  background: rgba(22, 163, 74, 0.08);
+}
+.sensor-status.status-fallback {
+  background: rgba(217, 119, 6, 0.08);
+}
+.sensor-status.status-failed {
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .metric-icon {

@@ -12,10 +12,11 @@ class SensorReading(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    temp = Column(Float)          # Temperature in Celsius
-    vibration = Column(Integer)   # 0 or 1
-    current = Column(Float)       # Current in mA
-    flame = Column(Integer)       # 0 or 1
+    temp = Column(Float)              # Temperature in Celsius
+    humidity = Column(Float, nullable=True, default=0.0)  # Humidity in %
+    vibration = Column(Integer)       # 0 or 1
+    current = Column(Float)           # Current in mA
+    flame = Column(Integer)           # 0 or 1
 
 
 class Prediction(Base):
@@ -33,7 +34,7 @@ class Alert(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    type = Column(String)         # e.g. "Fault Detected", "Flame Detected", "Warning"
+    type = Column(String)         # e.g. "Fault Detected", "Flame Detected", "Warning", "Sensor Failure"
     severity = Column(String)     # "info" | "warning" | "fault" | "critical"
     message = Column(String)
     status = Column(String, default="active")  # "active" | "resolved"

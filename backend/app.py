@@ -1,6 +1,7 @@
 """
 Main FastAPI application for the Wind Turbine Monitoring System.
 Serves both the REST API and the frontend static files.
+Supports switching between simulator and real hardware via USE_HARDWARE env var.
 """
 
 import os
@@ -13,12 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from database import engine, SessionLocal, Base
-from simulator import run_simulator
-from inference_engine import run_inference
 from routes.data import router as data_router
 from routes.predictions import router as predictions_router
 from routes.alerts import router as alerts_router
 from routes.maintenance import router as maintenance_router
+
+# ── Environment ──
+USE_HARDWARE = os.getenv("USE_HARDWARE", "false").lower() == "true"
 
 # ── Create App ──
 app = FastAPI(
@@ -56,15 +58,28 @@ def startup_event():
     # Create shared queue for sensor data
     sensor_queue = queue.Queue()
 
-    # Start simulator thread
-    t1 = threading.Thread(
-        target=run_simulator,
-        args=(sensor_queue,),
-        daemon=True,
-    )
+    # ── Data source: Hardware or Simulator ──
+    if USE_HARDWARE:
+        from serial_listener import run_serial_listener
+        t1 = threading.Thread(
+            target=run_serial_listener,
+            args=(sensor_queue,),
+            daemon=True,
+        )
+        print("[App] Starting with REAL HARDWARE mode — Serial listener active")
+    else:
+        from simulator import run_simulator
+        t1 = threading.Thread(
+            target=run_simulator,
+            args=(sensor_queue,),
+            daemon=True,
+        )
+        print("[App] Starting with SIMULATOR mode — No hardware required")
+
     t1.start()
 
     # Start inference engine thread
+    from inference_engine import run_inference
     t2 = threading.Thread(
         target=run_inference,
         args=(sensor_queue, SessionLocal),
@@ -72,7 +87,7 @@ def startup_event():
     )
     t2.start()
 
-    print("System started. Simulator and inference engine running.")
+    print("System started. Data source and inference engine running.")
 
 
 # ── Serve Frontend ──

@@ -9,9 +9,10 @@ let analyticsSeverityChart = null;
 
 async function initAnalytics() {
   try {
-    const [historyRes, alertsRes] = await Promise.all([
+    const [historyRes, alertsRes, predHistRes] = await Promise.all([
       fetch('/api/history?limit=200'),
-      fetch('/api/alerts')
+      fetch('/api/alerts'),
+      fetch('/api/prediction-history?limit=200')
     ]);
 
     if (!historyRes.ok || !alertsRes.ok) throw new Error('Analytics data fetch failed');
@@ -22,10 +23,17 @@ async function initAnalytics() {
     const readings = historyData.readings || [];
     const alerts = alertsData.alerts || [];
 
+    // Parse prediction history (may fail gracefully)
+    let predictions = [];
+    if (predHistRes.ok) {
+      const predData = await predHistRes.json();
+      predictions = predData.predictions || [];
+    }
+
     updateSummaryStats(readings, alerts);
     renderTempTrend(readings);
     renderCurrentTrend(readings);
-    renderDistribution(readings);
+    renderDistribution(predictions, readings);
     renderSeverityChart(alerts);
 
   } catch (err) {
@@ -44,7 +52,7 @@ function updateSummaryStats(readings, alerts) {
     const currents = readings.map(r => parseFloat(r.current));
     const maxTemp = Math.max(...temps);
     const avgCurrent = currents.reduce((a, b) => a + b, 0) / currents.length;
-    const faults = readings.filter(r => parseFloat(r.temp) >= 68).length;
+    const faults = alerts.filter(a => a.severity === 'fault' || a.severity === 'critical').length;
 
     if (maxTempEl) maxTempEl.textContent = maxTemp.toFixed(1) + ' °C';
     if (avgCurrentEl) avgCurrentEl.textContent = avgCurrent.toFixed(1) + ' mA';
@@ -132,18 +140,37 @@ function renderCurrentTrend(readings) {
   });
 }
 
-function renderDistribution(readings) {
+function renderDistribution(predictions, readings) {
   const ctx = document.getElementById('analytics-doughnut-chart');
   if (!ctx) return;
 
   let normal = 0, warning = 0, fault = 0, critical = 0;
-  readings.forEach(r => {
-    const temp = parseFloat(r.temp);
-    if (temp < 55) normal++;
-    else if (temp < 68) warning++;
-    else if (temp < 80) fault++;
-    else critical++;
-  });
+
+  if (predictions.length > 0) {
+    // Use real prediction history for accurate distribution
+    predictions.forEach(p => {
+      const pred = (p.prediction || '').toUpperCase();
+      if (pred.includes('CRITICAL') || pred.includes('FLAME')) {
+        critical++;
+      } else if (pred.includes('FAULT')) {
+        fault++;
+      } else if (pred.includes('WARNING')) {
+        warning++;
+      } else if (pred.includes('NORMAL')) {
+        normal++;
+      }
+      // Skip "Simulating — No Model" and "Initializing" — they don't count
+    });
+  } else {
+    // Fallback: approximate from temperature ranges (legacy behavior)
+    readings.forEach(r => {
+      const temp = parseFloat(r.temp);
+      if (temp < 55) normal++;
+      else if (temp < 68) warning++;
+      else if (temp < 80) fault++;
+      else critical++;
+    });
+  }
 
   if (analyticsDoughnutChart) {
     analyticsDoughnutChart.destroy();

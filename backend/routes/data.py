@@ -1,5 +1,6 @@
 """
 Data routes — live sensor data and historical readings.
+Now includes humidity in all responses.
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -25,6 +26,7 @@ def get_live_data(db: Session = Depends(get_db)):
                 "id": r.id,
                 "timestamp": r.timestamp.isoformat() if r.timestamp else None,
                 "temp": r.temp,
+                "humidity": r.humidity if r.humidity is not None else 0.0,
                 "vibration": r.vibration,
                 "current": r.current,
                 "flame": r.flame,
@@ -54,6 +56,7 @@ def get_history(
                 "id": r.id,
                 "timestamp": r.timestamp.isoformat() if r.timestamp else None,
                 "temp": r.temp,
+                "humidity": r.humidity if r.humidity is not None else 0.0,
                 "vibration": r.vibration,
                 "current": r.current,
                 "flame": r.flame,

@@ -1,11 +1,12 @@
 """
-Prediction routes — latest prediction and model metrics.
+Prediction routes — latest prediction, model metrics, system info,
+prediction history, and sensor health.
 """
 
 import os
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Prediction
@@ -33,6 +34,32 @@ def get_prediction(db: Session = Depends(get_db)):
         "confidence": pred.confidence,
         "override": pred.override,
         "timestamp": pred.timestamp.isoformat() if pred.timestamp else None,
+    }
+
+
+@router.get("/api/prediction-history")
+def get_prediction_history(
+    limit: int = Query(default=200, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    """Return last N prediction records for analytics."""
+    predictions = (
+        db.query(Prediction)
+        .order_by(Prediction.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    return {
+        "predictions": [
+            {
+                "id": p.id,
+                "timestamp": p.timestamp.isoformat() if p.timestamp else None,
+                "prediction": p.prediction,
+                "confidence": p.confidence,
+                "override": p.override,
+            }
+            for p in predictions
+        ]
     }
 
 
@@ -71,5 +98,24 @@ def get_model_metrics():
             "current_rate_of_change": 0.06,
             "vibration_count": 0.04,
             "flame_count": 0.03,
+            "humidity_mean": 0.02,
+            "humidity_std": 0.01,
         },
     }
+
+
+@router.get("/api/system-info")
+def get_system_info():
+    """Return system data source and version."""
+    use_hardware = os.getenv("USE_HARDWARE", "false").lower() == "true"
+    return {
+        "data_source": "hardware" if use_hardware else "simulator",
+        "version": "1.0.0",
+    }
+
+
+@router.get("/api/sensor-health")
+def get_sensor_health_status():
+    """Return current sensor health for all 5 sensors."""
+    from inference_engine import get_sensor_health
+    return get_sensor_health()

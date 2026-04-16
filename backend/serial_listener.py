@@ -29,10 +29,15 @@ def find_arduino_port():
             print(f"[Serial] Found port: {port.device} — {port.description}")
 
         # Auto-select first port that looks like Arduino
-        KEYWORDS = ["arduino", "usb", "ch340", "cp210", "ftdi", "serial"]
+        KEYWORDS = ["arduino", "usb", "ch340", "cp210", "ftdi"]
         for port in ports:
             desc_lower = (port.description or "").lower()
             mfr_lower = (port.manufacturer or "").lower()
+
+            # Skip bluetooth ports which often timeout
+            if "bluetooth" in desc_lower:
+                continue
+
             for kw in KEYWORDS:
                 if kw in desc_lower or kw in mfr_lower:
                     print(f"[Serial] Auto-selected port: {port.device}")
@@ -114,9 +119,9 @@ def run_serial_listener(data_queue, port=None, baud_rate=9600):
                         "timestamp": datetime.utcnow().isoformat(),
                         "temp": data.get("temp", None),
                         "humidity": data.get("humidity", None),
-                        "vibration": data.get("vibration", 0),
+                        "vibration": data.get("vibration", None),
                         "current": data.get("current", None),
-                        "flame": data.get("flame", 0),  # Missing flame = 0 (NEVER assume flame)
+                        "flame": data.get("flame", None),
                     }
 
                     # Validate we have at minimum temp or current (at least one useful sensor)

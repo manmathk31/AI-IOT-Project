@@ -1,12 +1,15 @@
 """
-Data Collector — Standalone script for collecting labeled sensor data from Arduino.
-Used by the hardware team to build training datasets for the ML model.
+Data Collector — Standalone script for collecting NORMAL operating data from Arduino.
+Used by the hardware team to build training datasets for the One-Class SVM model.
+
+One-Class SVM only needs normal operating data for training.
+No --label argument needed — all collected data is assumed normal.
 
 Usage:
-    python data_collector.py --port COM3 --label Normal --output data/normal.csv
-    python data_collector.py --port COM3 --label Warning --output data/warning.csv --duration 300
-    python data_collector.py --port COM3 --label Fault --output data/fault.csv
-    python data_collector.py --port COM3 --label CRITICAL_FLAME --output data/flame.csv --duration 120
+    python data_collector.py --port COM3 --session normal_load
+    python data_collector.py --port COM3 --session idle --duration 600
+    python data_collector.py --port COM3 --session high_speed --output data/high_speed.csv
+    python data_collector.py --list-ports
     python data_collector.py --help
 """
 
@@ -26,8 +29,7 @@ except ImportError:
     sys.exit(1)
 
 
-VALID_LABELS = ["Normal", "Warning", "Fault", "CRITICAL_FLAME"]
-CSV_HEADER = ["timestamp", "temp", "humidity", "vibration", "current", "flame", "label"]
+CSV_HEADER = ["timestamp", "temp", "humidity", "vibration", "current", "flame"]
 
 
 def list_ports():
@@ -41,14 +43,15 @@ def list_ports():
         print(f"  {p.device:12s} — {p.description}")
 
 
-def collect_data(port, baud, label, output_file, duration):
+def collect_data(port, baud, session, output_file, duration):
     """
-    Collect labeled sensor data from Arduino and save to CSV.
+    Collect normal operating data from Arduino and save to CSV.
+    No label column — One-Class SVM trains on normal data only.
 
     Args:
         port: Serial port (e.g. COM3)
         baud: Baud rate
-        label: Label for all readings in this session
+        session: Session description (e.g. "idle", "normal_load", "high_speed")
         output_file: Path to output CSV file
         duration: Seconds to collect (0 = until Ctrl+C)
     """
@@ -61,22 +64,28 @@ def collect_data(port, baud, label, output_file, duration):
     # Check if file exists (to decide whether to write header)
     file_exists = os.path.exists(output_file) and os.path.getsize(output_file) > 0
 
-    print(f"{'=' * 60}")
-    print(f"  Wind Turbine Data Collector")
-    print(f"{'=' * 60}")
+    print(f"\n{'=' * 70}")
+    print(f"  Wind Turbine Data Collector — One-Class SVM Training Data")
+    print(f"{'=' * 70}")
+    print()
+    print(f"  ⚠️  Collecting NORMAL operating data for One-Class SVM training.")
+    print(f"  ⚠️  Run the turbine in its normal operating condition now.")
+    print(f"  ⚠️  Do NOT simulate faults during this collection.")
+    print()
     print(f"  Port:     {port}")
     print(f"  Baud:     {baud}")
-    print(f"  Label:    {label}")
+    print(f"  Session:  {session}")
     print(f"  Output:   {output_file}")
     print(f"  Duration: {'Until Ctrl+C' if duration == 0 else f'{duration} seconds'}")
     print(f"  Mode:     {'Appending to existing file' if file_exists else 'Creating new file'}")
-    print(f"{'=' * 60}")
+    print(f"  Target:   At least 600 readings (10 minutes at 1Hz)")
+    print(f"{'=' * 70}")
     print()
 
     try:
         ser = serial.Serial(port, baud, timeout=2)
         time.sleep(2)  # Wait for Arduino reset
-        print(f"Connected to {port}. Collecting data...")
+        print(f"Connected to {port}. Collecting NORMAL data...")
         print()
     except serial.SerialException as e:
         print(f"ERROR: Could not open {port}: {e}")
@@ -131,8 +140,8 @@ def collect_data(port, baud, label, output_file, duration):
                     current = data.get("current", 0.0)
                     flame = data.get("flame", 0)
 
-                    # Write CSV row
-                    row = [timestamp, temp, humidity, vibration, current, flame, label]
+                    # Write CSV row (no label column)
+                    row = [timestamp, temp, humidity, vibration, current, flame]
                     writer.writerow(row)
                     count += 1
 
@@ -151,7 +160,7 @@ def collect_data(port, baud, label, output_file, duration):
 
                     if count % 10 == 0 or count == 1:
                         print(
-                            f"  Collected {progress} readings {time_info} — "
+                            f"  [{session}] Collected {progress} readings {time_info} — "
                             f"Temp: {temp:.1f}°C  "
                             f"Humidity: {humidity:.1f}%  "
                             f"Current: {current:.1f}mA  "
@@ -173,42 +182,57 @@ def collect_data(port, baud, label, output_file, duration):
             pass
 
     elapsed_total = time.time() - start_time
-    print(f"\n{'=' * 60}")
+    print(f"\n{'=' * 70}")
     print(f"  Collection complete!")
-    print(f"  Total readings: {count}")
-    print(f"  Duration:       {elapsed_total:.1f} seconds")
-    print(f"  Label:          {label}")
-    print(f"  Saved to:       {output_file}")
-    print(f"{'=' * 60}")
+    print(f"  Total readings:  {count}")
+    print(f"  Duration:        {elapsed_total:.1f} seconds")
+    print(f"  Session:         {session}")
+    print(f"  Saved to:        {output_file}")
+    if count < 600:
+        print(f"  ⚠ WARNING: Only {count} readings. Aim for 600+ for good training data.")
+    else:
+        print(f"  ✓ Sufficient data collected for One-Class SVM training.")
+    print(f"{'=' * 70}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Collect labeled sensor data from Arduino for ML training.",
+        description="Collect NORMAL operating data from Arduino for One-Class SVM training.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
+One-Class SVM Training Data Collection
+=======================================
+This tool collects ONLY normal operating data. The One-Class SVM model
+learns what "normal" looks like and flags anything outside that as anomalous.
+
 Examples:
-  python data_collector.py --port COM3 --label Normal --output data/normal.csv
-  python data_collector.py --port COM3 --label Warning --output data/warning.csv --duration 300
-  python data_collector.py --port /dev/ttyUSB0 --label Fault --output data/fault.csv
+  python data_collector.py --port COM3 --session idle
+  python data_collector.py --port COM3 --session normal_load --duration 600
+  python data_collector.py --port COM3 --session high_speed --output data/high_speed.csv
   python data_collector.py --list-ports
+
+After collection, upload the CSV to Google Colab and run colab_training.py.
         """,
     )
 
     parser.add_argument("--port", type=str, help="Serial port (e.g. COM3, /dev/ttyUSB0)")
     parser.add_argument("--baud", type=int, default=9600, help="Baud rate (default: 9600)")
     parser.add_argument(
-        "--label",
+        "--session",
         type=str,
-        choices=VALID_LABELS,
-        help="Label for this collection session",
+        default="normal",
+        help="Session description for logging (e.g. idle, normal_load, high_speed). Default: normal",
     )
-    parser.add_argument("--output", type=str, help="Output CSV file path (e.g. data/normal.csv)")
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="Output CSV file path (default: data/normal_<session>.csv)",
+    )
     parser.add_argument(
         "--duration",
         type=int,
-        default=300,
-        help="Duration in seconds (default: 300, 0 = until Ctrl+C)",
+        default=600,
+        help="Duration in seconds (default: 600 = 10 minutes, 0 = until Ctrl+C)",
     )
     parser.add_argument(
         "--list-ports",
@@ -222,10 +246,13 @@ Examples:
         list_ports()
         sys.exit(0)
 
-    if not args.port or not args.label or not args.output:
-        parser.error("--port, --label, and --output are required (use --help for usage)")
+    if not args.port:
+        parser.error("--port is required (use --help for usage)")
 
-    collect_data(args.port, args.baud, args.label, args.output, args.duration)
+    # Auto-generate output filename based on session
+    output_file = args.output or f"data/normal_{args.session}.csv"
+
+    collect_data(args.port, args.baud, args.session, output_file, args.duration)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ Features:
 - Graceful handling of missing/malformed sensor fields
 - Reconnection on serial errors (up to 5 retries)
 - Falls back to simulator if no serial port found
+
 """
 
 import json
@@ -114,14 +115,18 @@ def run_serial_listener(data_queue, port=None, baud_rate=9600):
                     if not isinstance(data, dict):
                         continue
 
+                    # Arduino now sends the correct logic (1 = event detected, 0 = normal)
+                    flame = data.get("flame", None)
+                    vibration = data.get("vibration", None)
+
                     # Build safe reading with fallbacks for missing fields
                     safe_reading = {
                         "timestamp": datetime.utcnow().isoformat(),
                         "temp": data.get("temp", None),
                         "humidity": data.get("humidity", None),
-                        "vibration": data.get("vibration", None),
+                        "vibration": vibration,
                         "current": data.get("current", None),
-                        "flame": data.get("flame", None),
+                        "flame": flame,
                     }
 
                     # Validate we have at minimum temp or current (at least one useful sensor)

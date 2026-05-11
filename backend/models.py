@@ -24,9 +24,10 @@ class Prediction(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    prediction = Column(String)   # Normal / Warning / Fault / CRITICAL_FLAME
+    prediction = Column(String)   # Normal / Warning / Fault / CRITICAL_FLAME / HIGH_VIBRATION
     confidence = Column(Float)    # 0.0 to 1.0
     override = Column(Boolean, default=False)
+    anomaly_score = Column(Float, nullable=True)  # Raw decision_function output from One-Class SVM
 
 
 class Alert(Base):
@@ -34,7 +35,7 @@ class Alert(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    type = Column(String)         # e.g. "Fault Detected", "Flame Detected", "Warning", "Sensor Failure"
+    type = Column(String)         # e.g. "Fault Detected", "Flame Detected", "Warning", "High Vibration", "Sensor Failure"
     severity = Column(String)     # "info" | "warning" | "fault" | "critical"
     message = Column(String)
     status = Column(String, default="active")  # "active" | "resolved"

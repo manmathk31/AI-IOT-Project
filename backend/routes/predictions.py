@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/api/prediction")
 def get_prediction(db: Session = Depends(get_db)):
-    """Return the most recent prediction."""
+    """Return the most recent prediction, including anomaly_score."""
     pred = (
         db.query(Prediction)
         .order_by(Prediction.timestamp.desc())
@@ -28,12 +28,14 @@ def get_prediction(db: Session = Depends(get_db)):
             "confidence": 0.0,
             "override": False,
             "timestamp": None,
+            "anomaly_score": None,
         }
     return {
         "prediction": pred.prediction,
         "confidence": pred.confidence,
         "override": pred.override,
         "timestamp": pred.timestamp.isoformat() if pred.timestamp else None,
+        "anomaly_score": pred.anomaly_score,
     }
 
 
@@ -57,6 +59,7 @@ def get_prediction_history(
                 "prediction": p.prediction,
                 "confidence": p.confidence,
                 "override": p.override,
+                "anomaly_score": p.anomaly_score,
             }
             for p in predictions
         ]
@@ -65,7 +68,7 @@ def get_prediction_history(
 
 @router.get("/api/model-metrics")
 def get_model_metrics():
-    """Return model performance metrics from ml/metrics.json."""
+    """Return model performance metrics from ml/metrics.json (One-Class SVM format)."""
     metrics_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ml", "metrics.json")
     # Also try relative path for when running from backend/ directory
     if not os.path.exists(metrics_path):
@@ -75,31 +78,28 @@ def get_model_metrics():
         with open(metrics_path, "r") as f:
             return json.load(f)
 
-    # Fallback placeholder so the frontend never breaks
+    # Fallback placeholder for One-Class SVM — so the frontend never breaks
     return {
-        "accuracy": 0.96,
-        "f1": 0.95,
-        "precision": 0.94,
-        "recall": 0.95,
-        "confusion_matrix": [
-            [145, 3, 1, 0],
-            [2, 88, 4, 0],
-            [1, 3, 72, 1],
-            [0, 0, 1, 38],
-        ],
+        "model_type": "One-Class SVM",
+        "kernel": "rbf",
+        "nu": 0.05,
+        "training_samples": 0,
+        "normal_detection_rate": 0.0,
+        "anomaly_detection_rate": 0.0,
+        "false_positive_rate": 0.0,
         "feature_importances": {
-            "temp_mean": 0.21,
-            "temp_std": 0.09,
-            "temp_rate_of_change": 0.08,
-            "temp_max": 0.14,
-            "current_mean": 0.18,
-            "current_std": 0.07,
-            "current_spike": 0.10,
-            "current_rate_of_change": 0.06,
-            "vibration_count": 0.04,
-            "flame_count": 0.03,
-            "humidity_mean": 0.02,
-            "humidity_std": 0.01,
+            "temp_mean": 0.0,
+            "temp_std": 0.0,
+            "temp_rate_of_change": 0.0,
+            "temp_max": 0.0,
+            "current_mean": 0.0,
+            "current_std": 0.0,
+            "current_spike": 0.0,
+            "current_rate_of_change": 0.0,
+            "humidity_mean": 0.0,
+            "humidity_std": 0.0,
+            "temp_rms": 0.0,
+            "current_rms": 0.0,
         },
     }
 
@@ -110,7 +110,7 @@ def get_system_info():
     use_hardware = os.getenv("USE_HARDWARE", "false").lower() == "true"
     return {
         "data_source": "hardware" if use_hardware else "simulator",
-        "version": "1.0.0",
+        "version": "2.0.0",
     }
 
 

@@ -15,9 +15,10 @@ from fastapi.responses import FileResponse
 
 from database import engine, SessionLocal, Base
 from routes.data import router as data_router
-from routes.predictions import router as predictions_router
 from routes.alerts import router as alerts_router
+from routes.predictions import router as predictions_router
 from routes.maintenance import router as maintenance_router
+from routes.model import router as model_router
 
 # ── Environment ──
 USE_HARDWARE = os.getenv("USE_HARDWARE", "false").lower() == "true"
@@ -42,6 +43,7 @@ app.include_router(data_router)
 app.include_router(predictions_router)
 app.include_router(alerts_router)
 app.include_router(maintenance_router)
+app.include_router(model_router)
 
 # ── Serve Static Files (CSS, JS, images) ──
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")

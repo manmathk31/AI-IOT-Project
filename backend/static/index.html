@@ -130,7 +130,7 @@
             </div>
             <div class="metric-info">
               <span class="metric-label">Current</span>
-              <span class="metric-value mono" id="metric-current">--.- mA</span>
+              <span class="metric-value mono" id="metric-current">--.- A</span>
             </div>
           </div>
           <div class="metric-card" data-sensor="vibration">
@@ -197,25 +197,116 @@
         </div>
       </section>
 
-      <!-- ===== AI INSIGHTS TAB ===== -->
+      <!-- ===== AI INSIGHTS TAB (One-Class SVM Control Panel) ===== -->
       <section id="section-insights" class="tab-section">
+        <!-- Model Status Banner -->
+        <div class="model-status-banner" id="model-status-banner" style="display: none;">
+          <div class="model-status-icon" id="model-status-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </div>
+          <div class="model-status-info">
+            <h3 id="model-status-title">Loading Model Status...</h3>
+            <p id="model-status-desc">Please wait.</p>
+          </div>
+          <div class="model-status-actions">
+            <button class="btn-secondary btn-sm" id="btn-reload-model" onclick="reloadModel()" style="display: none;">Reload</button>
+            <button class="btn-danger btn-sm" id="btn-delete-model" onclick="deleteModel()" style="display: none;">Delete Model</button>
+          </div>
+        </div>
+
+        <!-- Sensor Config Banner -->
+        <div class="sensor-config-banner">
+          <div class="sensor-config-item">
+            <span class="sensor-config-label">Flame Sensor:</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-flame" onchange="updateSensorConfig()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="flame-status-text" class="sensor-config-text">Enabled</span>
+          </div>
+          <div class="sensor-config-item">
+            <span class="sensor-config-label">Vibration Sensor:</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-vibration" onchange="updateSensorConfig()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="vibration-status-text" class="sensor-config-text">Enabled</span>
+          </div>
+        </div>
+
+        <div class="two-col-row">
+          <!-- Data Collection Card -->
+          <div class="card">
+            <h3 class="card-title">Data Collection</h3>
+            <div class="collection-stats">
+              <div class="stat-box">
+                <span class="stat-label">Status</span>
+                <span class="stat-value" id="col-status">Idle</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Readings</span>
+                <span class="stat-value mono" id="col-readings">0 / 600</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Duration</span>
+                <span class="stat-value mono" id="col-duration">0s</span>
+              </div>
+            </div>
+            
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="col-progress" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div class="alert-box alert-warning">
+              <strong>⚠ Warning:</strong> Run turbine normally during collection. Do NOT simulate faults.
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn-primary" id="btn-start-col" onclick="startCollection()">Start Collecting</button>
+              <button class="btn-secondary" id="btn-stop-col" onclick="stopCollection()" disabled>Stop</button>
+            </div>
+          </div>
+
+          <!-- Model Training Card -->
+          <div class="card">
+            <h3 class="card-title">Model Training</h3>
+            <div class="training-stats">
+              <div class="stat-box">
+                <span class="stat-label">Training Data</span>
+                <span class="stat-value" id="train-files">0 files</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Total Rows</span>
+                <span class="stat-value mono" id="train-rows">0</span>
+              </div>
+            </div>
+
+            <div class="action-buttons" style="margin-top: 24px;">
+              <button class="btn-primary" id="btn-train" onclick="trainModel()">Train Model</button>
+              <button class="btn-danger" id="btn-delete-data" onclick="deleteTrainingData()">Delete Data</button>
+            </div>
+          </div>
+        </div>
+
         <div class="metrics-row">
           <div class="metric-card">
-            <div class="metric-icon" style="background:#EFF6FF;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+            <div class="metric-icon" style="background:#F0FDF4;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
             </div>
             <div class="metric-info">
-              <span class="metric-label">Accuracy</span>
-              <span class="metric-value mono" id="metric-accuracy">—</span>
+              <span class="metric-label">Normal Detection Rate</span>
+              <span class="metric-value mono" id="metric-normal-detection-rate">—</span>
             </div>
           </div>
           <div class="metric-card">
-            <div class="metric-icon" style="background:#F0FDF4;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div class="metric-icon" style="background:#EFF6FF;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
             </div>
             <div class="metric-info">
-              <span class="metric-label">F1 Score</span>
-              <span class="metric-value mono" id="metric-f1">—</span>
+              <span class="metric-label">Training Samples</span>
+              <span class="metric-value mono" id="metric-training-samples">—</span>
             </div>
           </div>
           <div class="metric-card">
@@ -223,25 +314,60 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="metric-info">
-              <span class="metric-label">Precision</span>
-              <span class="metric-value mono" id="metric-precision">—</span>
+              <span class="metric-label">Warning Threshold</span>
+              <span class="metric-value mono" id="metric-warning-threshold">-0.2</span>
             </div>
           </div>
           <div class="metric-card">
             <div class="metric-icon" style="background:#FEF2F2;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div class="metric-info">
-              <span class="metric-label">Recall</span>
-              <span class="metric-value mono" id="metric-recall">—</span>
+              <span class="metric-label">Fault Threshold</span>
+              <span class="metric-value mono" id="metric-fault-threshold">-0.5</span>
             </div>
           </div>
         </div>
 
         <div class="two-col-row">
+          <!-- Anomaly Score Gauge (replaces Confusion Matrix) -->
           <div class="card">
-            <h3 class="card-title">Confusion Matrix</h3>
-            <div id="confusion-matrix-container"></div>
+            <h3 class="card-title">Live Anomaly Score</h3>
+            <div class="anomaly-gauge-wrapper">
+              <div class="gauge-score-display">
+                <span class="gauge-score-number mono" id="gauge-score-value">—</span>
+                <span class="gauge-label" id="gauge-score-label">Waiting...</span>
+              </div>
+              <div class="anomaly-gauge">
+                <div class="gauge-zone gauge-zone-red" style="left:0%;width:40%;"></div>
+                <div class="gauge-zone gauge-zone-amber" style="left:40%;width:12%;"></div>
+                <div class="gauge-zone gauge-zone-green" style="left:52%;width:48%;"></div>
+                <!-- Threshold markers -->
+                <div class="gauge-threshold" style="left:40%;" title="Fault: -0.5">
+                  <span class="gauge-threshold-label">-0.5</span>
+                </div>
+                <div class="gauge-threshold" style="left:52%;" title="Warning: -0.2">
+                  <span class="gauge-threshold-label">-0.2</span>
+                </div>
+                <!-- Moving indicator -->
+                <div class="gauge-indicator" id="gauge-indicator">
+                  <div class="gauge-indicator-dot"></div>
+                </div>
+              </div>
+              <div class="gauge-axis">
+                <span class="mono">-1.5</span>
+                <span class="mono">-1.0</span>
+                <span class="mono">-0.5</span>
+                <span class="mono">0.0</span>
+                <span class="mono">+0.5</span>
+                <span class="mono">+1.0</span>
+              </div>
+              <div class="gauge-legend">
+                <span class="gauge-legend-item"><span class="gauge-dot" style="background:#EF4444;"></span> Fault (< -0.5)</span>
+                <span class="gauge-legend-item"><span class="gauge-dot" style="background:#F59E0B;"></span> Warning (-0.5 to -0.2)</span>
+                <span class="gauge-legend-item"><span class="gauge-dot" style="background:#22C55E;"></span> Normal (> -0.2)</span>
+              </div>
+            </div>
           </div>
           <div class="card chart-card">
             <h3 class="card-title">Feature Importances</h3>

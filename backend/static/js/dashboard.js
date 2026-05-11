@@ -101,8 +101,8 @@ function initCharts() {
           ...sharedOptions.scales,
           y: {
             ...sharedOptions.scales.y,
-            suggestedMin: 25,
-            suggestedMax: 95
+            min: 0,
+            max: 60
           }
         }
       }
@@ -116,7 +116,7 @@ function initCharts() {
       data: {
         labels: timeLabels,
         datasets: [{
-          label: 'Current (mA)',
+          label: 'Current (A)',
           data: currentData,
           borderColor: '#D97706',
           backgroundColor: 'rgba(217, 119, 6, 0.08)',
@@ -134,8 +134,8 @@ function initCharts() {
           ...sharedOptions.scales,
           y: {
             ...sharedOptions.scales.y,
-            suggestedMin: 200,
-            suggestedMax: 520
+            min: 0,
+            max: 5
           }
         }
       }
@@ -165,7 +165,7 @@ async function pollLiveData() {
 
     if (tempEl) tempEl.textContent = parseFloat(latest.temp).toFixed(1) + ' °C';
     if (humidityEl) humidityEl.textContent = parseFloat(latest.humidity || 0).toFixed(1) + ' %';
-    if (currentEl) currentEl.textContent = parseFloat(latest.current).toFixed(1) + ' mA';
+    if (currentEl) currentEl.textContent = parseFloat(latest.current).toFixed(2) + ' A';
 
     if (vibLed) {
       vibLed.className = latest.vibration ? 'led led-active-vibration' : 'led';

@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Flying%20Saucer.png" alt="AI IoT" width="120" />
+  <img src="assets/wind-turbine.svg" alt="Green Wind Turbine" width="150" />
 
   <h1>🌪️ AI-Driven Wind Turbine Monitoring</h1>
 

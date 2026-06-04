@@ -13,7 +13,7 @@ Usage:
     python data_collector.py --help
 """
 
-import argparse
+import argpar
 import csv
 import json
 import os
